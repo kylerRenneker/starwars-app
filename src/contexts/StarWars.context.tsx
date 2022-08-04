@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import * as React from "react";
-import { IPeople, IPerson } from "../interfaces";
+import { IPeople, IPerson, IPlanets } from "../interfaces";
 
 export const StarWarsContext = React.createContext(null);
 
@@ -15,10 +15,14 @@ const baseUrl = "https://swapi.dev/api/";
  * state management solution.  - Sorry I didn't use Redux ;) -
  */
 
-export const StarWarsProvider = (props: any) => {
-  const [peopleDictionary, setPeopleDictionary] = React.useState<any>({});
-  const [filteredPlanets, setFilteredPlanets] = React.useState<any>({});
-  const [planetDictionary, setPlanetDictionary] = React.useState<any>({});
+interface IProps {
+  children: JSX.Element;
+}
+
+export const StarWarsProvider = (props: IProps) => {
+  const [peopleDictionary, setPeopleDictionary] = React.useState<IPeople>({});
+  const [filteredPlanets, setFilteredPlanets] = React.useState<IPlanets>({});
+  const [planetDictionary, setPlanetDictionary] = React.useState<IPlanets>({});
   const [nextPage, setNextPage] = React.useState<string | null>(null);
   // TODO: add some error handling to catch 404s and provide a standard error message for others
   // const [error, setError] = React.useState<number | null>(null);

@@ -1,10 +1,11 @@
 import * as React from "react";
 import { StarWarsContext } from "../contexts/StarWars.context";
+import { IPlanets } from "../interfaces";
 import "./ContentPane.scss";
 
 export const ContentPane = () => {
   const [search, setSearch] = React.useState<string>("");
-  const [planets, setPlanets] = React.useState<any>({});
+  const [planets, setPlanets] = React.useState<IPlanets>({});
   const [loading, setLoading] = React.useState<boolean>(false);
   const context: any = React.useContext(StarWarsContext);
   const {
@@ -15,11 +16,18 @@ export const ContentPane = () => {
     filteredPlanets,
   } = context;
 
+  /**
+   * When the ContentPane mounts get the people and planets for the first page.
+   */
   React.useEffect(() => {
     setLoading(true);
     context.getPeopleAndPlanets();
   }, []);
 
+  /**
+   * When we search we are going to send back a filtered list of planets. The filtered
+   * list should take precedence if it has data.
+   */
   React.useEffect(() => {
     if (Object.keys(filteredPlanets).length) {
       setPlanets(filteredPlanets);
@@ -30,6 +38,9 @@ export const ContentPane = () => {
     }
   }, [planetDictionary, filteredPlanets]);
 
+  /**
+   * What one second after the user stops typing before performing the search/filter
+   */
   let timer: any;
   React.useEffect(() => {
     timer = setTimeout(() => {
@@ -38,11 +49,18 @@ export const ContentPane = () => {
     }, 1000);
   }, [search]);
 
+  /**
+   * Load more event that performs the pagination and gets the next batch of
+   * people and associated planet data
+   */
   const handleLoadmore = () => {
     setLoading(true);
     context.getPeopleAndPlanets(nextPage);
   };
 
+  /**
+   * Event trigger on input change
+   */
   const filterByPlanet = (e: any) => {
     setSearch(e.target.value);
     clearTimeout(timer);
@@ -51,6 +69,10 @@ export const ContentPane = () => {
   return (
     <div className="content-pane">
       <div className="search-and-filter">
+        {/* 
+          A future enhancement could include creating a custom lazy load select field just in case the user
+          doesn't know the name of the planet they want to search for.
+        */}
         <input
           type="text"
           onChange={filterByPlanet}

@@ -7,3 +7,12 @@ export interface IPerson {
 export interface IPeople {
   [x: string]: IPerson;
 }
+
+export interface IPlanet {
+  name: string;
+  residents: IPeople;
+}
+
+export interface IPlanets {
+  [x: string]: IPlanet;
+}
