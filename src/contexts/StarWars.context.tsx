@@ -43,8 +43,8 @@ export const StarWarsProvider = (props: any) => {
         if (response.data.next) {
           setNextPage(response.data.next);
         }
-        setPeopleDictionary(peopleLookup);
-        setPlanetDictionary(planetLookup);
+        setPeopleDictionary({ ...peopleDictionary, ...peopleLookup });
+        setPlanetDictionary({ ...planetDictionary, ...planetLookup });
       }
     } catch (e) {
       console.error(e);
