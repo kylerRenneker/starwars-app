@@ -7,6 +7,7 @@ export const StarWarsContext = React.createContext(null);
 const baseUrl = "https://swapi.dev/api/";
 
 export const StarWarsProvider = (props: any) => {
+  const [loading, setLoading] = React.useState(true);
   const [peopleDictionary, setPeopleDictionary] = React.useState<any>({});
   const [planetDictionary, setPlanetDictionary] = React.useState<any>({});
   const [nextPage, setNextPage] = React.useState<string | null>(null);
@@ -22,6 +23,10 @@ export const StarWarsProvider = (props: any) => {
       if (response.data?.results) {
         await Promise.all(
           response.data?.results.map(async (person: IPerson) => {
+            peopleLookup[person.url] = {
+              name: person.name,
+              homeworld: person.homeworld,
+            };
             if (!planetDictionary[person.homeworld]) {
               const planetResponse: AxiosResponse = await axios({
                 url: person.homeworld,
@@ -33,26 +38,18 @@ export const StarWarsProvider = (props: any) => {
                 };
               }
             }
-            peopleLookup[person.url] = {
-              name: person.name,
-              homeworld: person.homeworld,
-            };
           })
         );
-
-        response.data.next && setNextPage(response.data.next);
-        setPeopleDictionary({
-          ...peopleDictionary,
-          ...peopleLookup,
-        });
-        setPlanetDictionary({
-          ...planetDictionary,
-          ...planetLookup,
-        });
+        if (response.data.next) {
+          setNextPage(response.data.next);
+        }
+        setPeopleDictionary(peopleLookup);
+        setPlanetDictionary(planetLookup);
       }
     } catch (e) {
       console.error(e);
     }
+    setLoading(false);
   };
 
   return (
@@ -63,6 +60,7 @@ export const StarWarsProvider = (props: any) => {
           planetDictionary,
           peopleDictionary,
           nextPage,
+          loading,
         } as any
       }
     >
