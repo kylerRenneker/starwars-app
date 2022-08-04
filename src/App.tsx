@@ -1,24 +1,35 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import * as React from "react";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+import "./App.css";
+
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: "https://swapi.dev/api/",
+});
 
 function App() {
+  React.useEffect(() => {
+    getPeople();
+  }, []);
+
+  const getPeople = async () => {
+    try {
+      const response: AxiosResponse = await axiosInstance.get("people");
+      console.log(response.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+    <div className="app">
+      <header className="app-header">
+        <h1>Star Wars App</h1>
+        <p>I know, real original naming</p>
       </header>
+      <main className="main-container">
+        <div className="filter-search-container"></div>
+        <div className="results-container"></div>
+      </main>
     </div>
   );
 }
