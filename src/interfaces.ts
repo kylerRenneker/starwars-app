@@ -1,5 +1,9 @@
-export interface IPeople {
+export interface IPerson {
   name: string;
-  url: string;
   homeworld: string;
+  [x: string]: any;
+}
+
+export interface IPeople {
+  [x: string]: IPerson;
 }
