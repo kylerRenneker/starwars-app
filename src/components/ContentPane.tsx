@@ -6,7 +6,6 @@ import "./ContentPane.scss";
 export const ContentPane = () => {
   const [search, setSearch] = React.useState<string>("");
   const [planets, setPlanets] = React.useState<IPlanets>({});
-  const [loading, setLoading] = React.useState<boolean>(false);
   const context: any = React.useContext(StarWarsContext);
   const {
     peopleDictionary,
@@ -14,27 +13,20 @@ export const ContentPane = () => {
     nextPage,
     getPeopleByPlanetName,
     filteredPlanets,
+    loading,
   } = context;
 
   /**
-   * When the ContentPane mounts get the people and planets for the first page.
-   */
-  React.useEffect(() => {
-    setLoading(true);
-    context.getPeopleAndPlanets();
-  }, []);
-
-  /**
-   * When we search we are going to send back a filtered list of planets. The filtered
+   * When we search/filter we are going to send back a filtered list of planets. The filtered
    * list should take precedence if it has data.
    */
   React.useEffect(() => {
-    if (Object.keys(filteredPlanets).length) {
+    if (Object.keys(filteredPlanets).length === 0 && search) {
+      setPlanets({});
+    } else if (Object.keys(filteredPlanets).length) {
       setPlanets(filteredPlanets);
-      setLoading(false);
     } else if (Object.keys(planetDictionary).length) {
       setPlanets(planetDictionary);
-      setLoading(false);
     }
   }, [planetDictionary, filteredPlanets]);
 
@@ -44,7 +36,6 @@ export const ContentPane = () => {
   let timer: any;
   React.useEffect(() => {
     timer = setTimeout(() => {
-      setLoading(true);
       getPeopleByPlanetName(search);
     }, 1000);
   }, [search]);
@@ -54,7 +45,6 @@ export const ContentPane = () => {
    * people and associated planet data
    */
   const handleLoadmore = () => {
-    setLoading(true);
     context.getPeopleAndPlanets(nextPage);
   };
 
