@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import * as React from "react";
-import { IPeople, IPlanets } from "../interfaces";
+import { IPeople, IPerson, IPlanets } from "../interfaces";
 
 export const StarWarsContext = React.createContext(null);
 
@@ -24,9 +24,8 @@ export const StarWarsProvider = (props: IProps) => {
   const [filteredPlanets, setFilteredPlanets] = React.useState<IPlanets>({});
   const [planetDictionary, setPlanetDictionary] = React.useState<IPlanets>({});
   const [nextPage, setNextPage] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState<boolean>(false);
-  // TODO: add some error handling to catch 404s and provide a standard error message for others
-  // const [error, setError] = React.useState<number | null>(null);
+  const [loading, setLoading] = React.useState<boolean | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     getPeopleAndPlanets();
@@ -37,20 +36,21 @@ export const StarWarsProvider = (props: IProps) => {
    */
   const getPeopleAndPlanets = async (loadMore?: boolean) => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const peopleLookup: IPeople = {};
       const planetLookup: any = { ...planetDictionary };
       /**
        * If this is the initial load we just query for the first page of people, otherwise
-       * we paginate to the next page
+       * if loadMore is passe in we paginate to the next page.
        */
       const response: AxiosResponse = await axios({
         url: `${loadMore && nextPage ? nextPage : `${baseUrl}people`}`,
       });
       if (response.data?.results?.length) {
         /**
-         * This is where we hydrate our people & planet dictionaries. Ideally we would have better REST endpoints (or GraphQL queries)
-         * that would join the people and associated planet data.
+         * This is where we hydrate our people & planet dictionaries. Ideally, we would have better REST endpoints (or GraphQL queries)
+         * that would join the people and associated planet data and return what we want.
          *
          * By using objects to store the data, we can perform lookups to determine if we need to grab the planet data or not.
          */
@@ -88,50 +88,57 @@ export const StarWarsProvider = (props: IProps) => {
         setPeopleDictionary({ ...peopleDictionary, ...peopleLookup });
         setPlanetDictionary({ ...planetDictionary, ...planetLookup });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setErrorMessage("Oops! Someting went wrong.");
     }
     setLoading(false);
   };
 
   const getPeopleByPlanetName = async (planetName: string) => {
     /**
-     * There are several different approached we could take to improve the search/filtering.
+     * There are several different approaches we could take to improve the search/filtering.
      * One option is to lazy load all of the planets into memory when the app mounts, preventing
      * the need for a network request for each search.
      *
      * Another way to optimize would be to track when we have loaded all people. At that point we would not
      * need to hit the API at all, we could just filter by whats in memory.
      */
-    setLoading(true);
+    setErrorMessage(null);
     try {
       if (planetName) {
+        setLoading(true);
         const response: AxiosResponse = await axios({
           url: `https://swapi.dev/api/planets/?search=${planetName}`,
         });
         if (response.data?.results?.length) {
           const planets = response.data?.results;
-          const planetLookup: any = {};
-          const personLookup: any = {};
+          const planetLookup: IPlanets = {};
+          const personLookup: IPeople = {};
           for (const planet of planets) {
             planetLookup[planet.url] = {
               name: planet.name,
               residents: planet.residents,
             };
             /**
-             * This could be optimized
+             * Small enhancment - find the list of missing people first.
+             *
+             * Technically the time complexity is still 0(n) for Array.filter and we
+             * are still making the same number of network request as before, but this
+             * is easier to follow and understand.
              */
-            for (const person of planet.residents) {
-              if (!peopleDictionary[person]) {
-                const response: AxiosResponse = await axios({
-                  url: person,
-                });
-                if (response.data)
-                  personLookup[response.data.url] = {
-                    name: response.data.name,
-                    homeworld: response.data.homeworld,
-                  };
-              }
+            const missingPeople = planet.residents.filter(
+              (person: string) => !peopleDictionary[person]
+            );
+            for (const person of missingPeople) {
+              const response: AxiosResponse = await axios({
+                url: person,
+              });
+              if (response.data)
+                personLookup[response.data.url] = {
+                  name: response.data.name,
+                  homeworld: response.data.homeworld,
+                };
             }
           }
 
@@ -143,13 +150,18 @@ export const StarWarsProvider = (props: IProps) => {
         } else {
           setFilteredPlanets({});
         }
+        setLoading(false);
       } else {
         setFilteredPlanets({});
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      if (e.response.status === 404) {
+        setErrorMessage("Not Found");
+      } else {
+        setErrorMessage("Oops! Someting went wrong. Please try again later.");
+      }
     }
-    setLoading(false);
   };
 
   return (
@@ -163,6 +175,7 @@ export const StarWarsProvider = (props: IProps) => {
           peopleDictionary,
           nextPage,
           loading,
+          errorMessage,
         } as any
       }
     >

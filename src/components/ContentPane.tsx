@@ -4,7 +4,7 @@ import { IPlanets } from "../interfaces";
 import "./ContentPane.scss";
 
 export const ContentPane = () => {
-  const [search, setSearch] = React.useState<string>("");
+  const [search, setSearch] = React.useState<string | null>(null);
   const [planets, setPlanets] = React.useState<IPlanets>({});
   const context: any = React.useContext(StarWarsContext);
   const {
@@ -14,6 +14,7 @@ export const ContentPane = () => {
     getPeopleByPlanetName,
     filteredPlanets,
     loading,
+    errorMessage,
   } = context;
 
   /**
@@ -35,9 +36,12 @@ export const ContentPane = () => {
    */
   let timer: any;
   React.useEffect(() => {
-    timer = setTimeout(() => {
-      getPeopleByPlanetName(search);
-    }, 1000);
+    // Prevent calling getPeopleByPlanetName on initial load
+    if (search !== null) {
+      timer = setTimeout(() => {
+        getPeopleByPlanetName(search);
+      }, 1000);
+    }
   }, [search]);
 
   /**
@@ -58,17 +62,25 @@ export const ContentPane = () => {
 
   return (
     <div className="content-pane">
+      {errorMessage && (
+        <p style={{ color: "red", textAlign: "center" }}>{errorMessage}</p>
+      )}
       <div className="search-and-filter">
         {/* 
           A future enhancement could include creating a custom lazy load select field just in case the user
           doesn't know the name of the planet they want to search for.
         */}
-        <input
-          type="text"
-          onChange={filterByPlanet}
-          value={search}
-          placeholder="Search to filter by planet"
-        />
+        <form>
+          <label htmlFor="planet-filter">Filter: </label>
+          <input
+            id="planet-filter"
+            name="planetFilter"
+            type="text"
+            onChange={filterByPlanet}
+            value={search || ""}
+            placeholder="Search to filter by planet"
+          />
+        </form>
       </div>
       <div className="content-container">
         {loading && <p className="loader">Loading...</p>}
